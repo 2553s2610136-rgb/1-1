@@ -1,95 +1,122 @@
 import streamlit as st
-import random
 
 st.set_page_config(
-    page_title="시험기간의 나",
-    page_icon="📚",
+    page_title="시험기간 휴대폰 사용 관리",
+    page_icon="📱",
     layout="centered"
 )
 
-st.title("📚 시험기간의 나")
-st.caption("책상에는 앉아 있는데 공부는 안 되는 현실")
-
-# 세션 상태 초기화
-if "study_time" not in st.session_state:
-    st.session_state.study_time = 0
-
-# 현재 상태 선택
-status = st.selectbox(
-    "지금 나는 무엇을 하고 있나요?",
-    [
-        "공부 중",
-        "휴대폰 보는 중",
-        "유튜브 보는 중",
-        "멍 때리는 중",
-        "간식 먹는 중"
-    ]
+st.title("📱 시험기간 휴대폰 사용 관리 도우미")
+st.markdown(
+    """
+시험기간 동안 휴대폰 사용 습관을 점검하고,
+공부 시간을 얼마나 확보할 수 있는지 확인해보세요.
+"""
 )
 
-st.write(f"현재 상태: **{status}**")
+try:
+    st.subheader("📝 현재 상황 입력")
 
-# 집중도
-focus = st.slider(
-    "현재 집중도 (%)",
-    min_value=0,
-    max_value=100,
-    value=50
-)
+    daily_phone_time = st.slider(
+        "하루 평균 휴대폰 사용 시간(시간)",
+        min_value=0.0,
+        max_value=12.0,
+        value=3.0,
+        step=0.5
+    )
 
-st.progress(focus)
+    study_time = st.slider(
+        "하루 평균 공부 시간(시간)",
+        min_value=0.0,
+        max_value=15.0,
+        value=4.0,
+        step=0.5
+    )
 
-# 집중도 메시지
-if focus >= 80:
-    st.success("오늘은 꽤 집중하고 있네요! 👍")
-elif focus >= 50:
-    st.info("나쁘지 않지만 조금만 더 힘내세요!")
-else:
-    st.warning("집중력이 위험합니다 🚨")
+    days_left = st.number_input(
+        "시험일까지 남은 일수",
+        min_value=1,
+        max_value=365,
+        value=14
+    )
 
-# 공부 목표
-goal = st.text_input(
-    "오늘의 공부 목표를 적어보세요",
-    placeholder="예) 수학 문제집 20쪽 풀기"
-)
+    if st.button("결과 확인하기"):
 
-if goal:
-    st.write("🎯 목표:", goal)
+        total_phone_time = daily_phone_time * days_left
 
-st.divider()
+        potential_recovery = total_phone_time * 0.5
 
-# 공부 시간 추가
-if st.button("📖 공부 10분 추가"):
-    st.session_state.study_time += 10
-    st.success("10분 공부 완료!")
+        score = 100
 
-st.metric(
-    "오늘 누적 공부 시간",
-    f"{st.session_state.study_time}분"
-)
+        score -= daily_phone_time * 8
+        score += study_time * 3
 
-st.divider()
+        score = max(0, min(100, int(score)))
 
-# 현실 체크
-messages = [
-    "시험은 다가오는데 휴대폰은 왜 이렇게 재밌을까요?",
-    "5분만 쉰다는 말은 보통 30분이 됩니다.",
-    "미래의 내가 현재의 나를 보고 있습니다.",
-    "한 문제라도 풀면 오늘의 승리입니다.",
-    "공부 시작이 가장 어렵습니다."
-]
+        st.subheader("📊 분석 결과")
 
-if st.button("😵 현실 체크"):
-    st.info(random.choice(messages))
+        st.metric(
+            "시험 전 예상 휴대폰 사용 시간",
+            f"{total_phone_time:.1f}시간"
+        )
 
-st.divider()
+        st.metric(
+            "절반만 줄여도 확보 가능한 공부 시간",
+            f"{potential_recovery:.1f}시간"
+        )
 
-st.subheader("📊 오늘의 상태 요약")
+        st.metric(
+            "시험 집중 준비 점수",
+            f"{score}점"
+        )
 
-if focus >= 70 and status == "공부 중":
-    st.success("시험기간 모범생 모드")
-elif status != "공부 중":
-    st.warning("공부보다 다른 것에 관심이 가고 있습니다.")
-else:
-    st.info("조금만 더 집중하면 좋은 결과가 있을 거예요!")
+        if score >= 80:
+            level = "매우 좋음 🟢"
+            advice = """
+현재 습관을 유지하면 좋습니다.
 
-st.caption("Made with Streamlit")
+- 공부 중 알림 끄기
+- SNS 확인 시간 정하기
+- 취침 전 휴대폰 사용 줄이기
+"""
+        elif score >= 60:
+            level = "보통 🟡"
+            advice = """
+휴대폰 사용을 조금만 줄여도 큰 효과가 있습니다.
+
+- 공부 시간에는 방해 금지 모드 사용
+- 30분 공부 후 5분 휴식
+- 짧은 영상 시청 시간 제한
+"""
+        else:
+            level = "주의 🔴"
+            advice = """
+휴대폰 사용 습관 개선이 필요합니다.
+
+- SNS 앱 사용 시간 제한 설정
+- 공부 공간에서 휴대폰 멀리 두기
+- 공부 시작 전 비행기 모드 활용
+- 하루 목표 공부 시간 정하기
+"""
+
+        st.subheader("🎯 집중도 평가")
+        st.success(level)
+
+        st.subheader("💡 맞춤 추천")
+        st.info(advice)
+
+        st.subheader("📈 예상 변화")
+
+        reduced_phone = daily_phone_time * 0.7
+        saved_time = (daily_phone_time - reduced_phone) * days_left
+
+        st.write(
+            f"하루 휴대폰 사용을 30%만 줄여도 시험일까지 약 **{saved_time:.1f}시간**을 추가로 확보할 수 있습니다."
+        )
+
+except Exception as e:
+    st.error("오류가 발생했습니다.")
+    st.exception(e)
+
+st.markdown("---")
+st.caption("시험기간 집중력 향상을 위한 간단한 자기 점검 도구")
